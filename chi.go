@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"time"
@@ -121,11 +120,19 @@ func (s *logger) ChiRequestLogger() func(next http.Handler) http.Handler {
 					"duration",
 					time.Since(t1),
 				)
-				body, err := r.GetBody()
-				if err != nil {
-					s.Error("dont read body")
+
+				// Request
+				reqBody := []byte{}
+				if r.Body != nil { // Read
+					reqBody, _ = io.ReadAll(r.Body)
 				}
-				buf, _ := ioutil.ReadAll(body)
+				r.Body = io.NopCloser(bytes.NewBuffer(reqBody)) // Reset
+
+				// body, err := r.GetBody()
+				// if err != nil {
+				// 	s.Error("dont read body")
+				// }
+				// buf, _ := ioutil.ReadAll(body)
 
 				s.Debug(r.URL.Path,
 					"reqHeaders",
@@ -133,7 +140,7 @@ func (s *logger) ChiRequestLogger() func(next http.Handler) http.Handler {
 					"respHeaders",
 					fmt.Sprintf("%+v", ww.Header()),
 					"reqBody",
-					bytes.NewBuffer(buf).String(),
+					string(reqBody),
 				)
 			}()
 
