@@ -4,9 +4,9 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
+	"net/http/httputil"
 	"time"
 )
 
@@ -120,18 +120,18 @@ func (s *logger) ChiRequestLogger() func(next http.Handler) http.Handler {
 					"duration",
 					time.Since(t1),
 				)
-				respBytes, err := ioutil.ReadAll(r.Body)
+				dumpBody, err := httputil.DumpRequest(r, true)
 				if err != nil {
 					s.Error("dont read body")
 				}
-				body := string(respBytes)
+
 				s.Debug(r.URL.Path,
 					"reqHeaders",
 					fmt.Sprintf("%+v", r.Header),
 					"respHeaders",
 					fmt.Sprintf("%+v", ww.Header()),
 					"reqBody",
-					body,
+					dumpBody,
 				)
 			}()
 
