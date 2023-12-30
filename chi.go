@@ -7,6 +7,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -113,6 +114,10 @@ func (s *logger) ChiRequestLogger() func(next http.Handler) http.Handler {
 				reqBody, _ = io.ReadAll(r.Body)
 			}
 			r.Body = io.NopCloser(bytes.NewBuffer(reqBody))
+
+			body := string(reqBody)
+			body = strings.TrimSuffix(body, "\n")
+			body = strings.TrimSpace(body)
 
 			t1 := time.Now()
 			defer func() {
