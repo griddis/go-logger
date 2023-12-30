@@ -107,6 +107,12 @@ func (s *logger) ChiRequestLogger() func(next http.Handler) http.Handler {
 			//ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
 
 			ww := NewWrapResponseWriter(w, r.ProtoMajor)
+			// Request
+			reqBody := []byte{}
+			if r.Body != nil {
+				reqBody, _ = io.ReadAll(r.Body)
+			}
+			r.Body = io.NopCloser(bytes.NewBuffer(reqBody))
 
 			t1 := time.Now()
 			defer func() {
@@ -120,19 +126,6 @@ func (s *logger) ChiRequestLogger() func(next http.Handler) http.Handler {
 					"duration",
 					time.Since(t1),
 				)
-
-				// Request
-				reqBody := []byte{}
-				if r.Body != nil { // Read
-					reqBody, _ = io.ReadAll(r.Body)
-				}
-				r.Body = io.NopCloser(bytes.NewBuffer(reqBody)) // Reset
-
-				// body, err := r.GetBody()
-				// if err != nil {
-				// 	s.Error("dont read body")
-				// }
-				// buf, _ := ioutil.ReadAll(body)
 
 				s.Debug(r.URL.Path,
 					"reqHeaders",
