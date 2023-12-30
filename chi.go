@@ -3,11 +3,11 @@ package logging
 import (
 	"bufio"
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net"
 	"net/http"
-	"strings"
 	"time"
 )
 
@@ -115,9 +115,10 @@ func (s *logger) ChiRequestLogger() func(next http.Handler) http.Handler {
 			}
 			r.Body = io.NopCloser(bytes.NewBuffer(reqBody))
 
-			body := string(reqBody)
-			body = strings.TrimSuffix(body, "\n")
-			body = strings.TrimSpace(body)
+			body := new(bytes.Buffer)
+			if err := json.Compact(body, reqBody); err != nil {
+				s.Error("json.Compact", "error", err)
+			}
 
 			t1 := time.Now()
 			defer func() {
@@ -138,7 +139,7 @@ func (s *logger) ChiRequestLogger() func(next http.Handler) http.Handler {
 					"respHeaders",
 					fmt.Sprintf("%+v", ww.Header()),
 					"reqBody",
-					string(reqBody),
+					body.String(),
 				)
 			}()
 

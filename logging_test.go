@@ -1,6 +1,8 @@
 package logging
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"reflect"
@@ -42,6 +44,16 @@ func TestNewLogger(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestTrimBody(t *testing.T) {
+	var body = []byte("{ \n    \"notification\": { \n        \"applicationID\":\"58593a7e8004bb1d152ac476\",\n        \"token\":\"1b3bd17ecc2ec7c07ced453943c2ee4273a44db52547079443403d85a414eb46\",\n        \"systemNotification\":\"iOS\",\n        \"message\":\"Test message для Сергея\",\n        \"type\":\"CheckCode\",\n        \"badge\":5,\n        \"data\": {\n            \"data\":\"34587\",\n            \"type\": \"\"\n        }\n    }\n}")
+
+	buffer := new(bytes.Buffer)
+	if err := json.Compact(buffer, body); err != nil {
+		fmt.Println(err)
+	}
+	t.Errorf("body() = %v", buffer)
 }
 
 /*func TestNewLogger_1(t *testing.T) {
