@@ -2,11 +2,12 @@ package logging
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net"
 	"net/http"
-	"net/http/httputil"
 	"time"
 )
 
@@ -120,10 +121,11 @@ func (s *logger) ChiRequestLogger() func(next http.Handler) http.Handler {
 					"duration",
 					time.Since(t1),
 				)
-				dumpBody, err := httputil.DumpRequest(r, true)
+				body, err := r.GetBody()
 				if err != nil {
 					s.Error("dont read body")
 				}
+				buf, _ := ioutil.ReadAll(body)
 
 				s.Debug(r.URL.Path,
 					"reqHeaders",
@@ -131,7 +133,7 @@ func (s *logger) ChiRequestLogger() func(next http.Handler) http.Handler {
 					"respHeaders",
 					fmt.Sprintf("%+v", ww.Header()),
 					"reqBody",
-					dumpBody,
+					bytes.NewBuffer(buf).String(),
 				)
 			}()
 
