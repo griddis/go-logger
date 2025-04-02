@@ -13,7 +13,7 @@ import (
 	"sync"
 	"time"
 
-	kitloglevel "github.com/go-kit/kit/log/level"
+	kitloglevel "github.com/go-kit/log/level"
 	rz "gitlab.com/bloom42/libs/rz-go"
 )
 
@@ -140,18 +140,16 @@ func (s *logger) _parse(keyvals ...interface{}) []rz.Field {
 	var l []rz.Field = make([]rz.Field, len(keyvals)%2)
 	for i := 0; i < len(keyvals); i += 2 {
 		switch keyvals[i].(type) {
-		case string, int, int64:
-			l = append(l, rz.String(s._convert(keyvals[i]), s._convert(keyvals[i+1])))
-			break
+		// case string, int, int64:
+		// 	l = append(l, rz.String(_convert(keyvals[i]), _convert(keyvals[i+1])))
 		case error:
 			l = append(l, rz.Error("error", keyvals[i].(error)))
 			//i -= 1
-			break
 		//case map[string][]string:
-
 		case []string:
 			l = append(l, s._parseSliceString(keyvals[i].([]string))...)
-			break
+		default:
+			l = append(l, rz.String(_convert(keyvals[i]), _convert(keyvals[i+1])))
 		}
 	}
 
@@ -175,24 +173,34 @@ func (s *logger) _parseSliceString(keyvals []string) (l []rz.Field) {
 	return l
 }
 
-func (s *logger) _convert(val interface{}) string {
-	switch val.(type) {
+func _convert(val interface{}) string {
+	switch v := val.(type) {
 	case string:
-		return val.(string)
+		return v
 	case []string:
-		slice := val.([]string)
-		return strings.Join(slice[:], ",")
+		return strings.Join(v[:], ", ")
 	case time.Duration:
-		return val.(time.Duration).String()
+		return v.String()
 	case int:
-		return strconv.Itoa(val.(int))
+		return strconv.Itoa(v)
+	case int32:
+		return strconv.Itoa(int(v))
 	case int64:
-		i, _ := val.(int64)
-		return strconv.FormatInt(i, 10)
+		return strconv.FormatInt(v, 10)
+	// case float32:
+	// 	return strconv.FormatFloat(float64(v), 'f', 3, 64)
+	case float64:
+		return strconv.FormatFloat(v, 'f', -1, 64)
 	case error:
-		return val.(error).Error()
+		return v.Error()
+	default:
+		if v != nil {
+			return fmt.Sprint(v)
+		} else {
+			return missingKey
+		}
 	}
-	return missingKey
+	// return missingKey
 }
 
 func (s *logger) Fatal(info string, keyvals ...interface{}) {
