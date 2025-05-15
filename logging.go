@@ -101,8 +101,8 @@ func WithContext(ctx context.Context, logger Logger) context.Context {
 }
 
 func FromContext(ctx context.Context) Logger {
-	if logger, ok := ctx.Value(loggerKey{}).(logger); ok {
-		return &logger
+	if logger, ok := ctx.Value(loggerKey{}).(Logger); ok {
+		return logger
 	}
 	return Log
 }
