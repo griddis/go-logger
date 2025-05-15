@@ -2,11 +2,13 @@ package logging
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -307,5 +309,24 @@ func Test_convert(t *testing.T) {
 				t.Errorf("_convert() = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestWithAddsFields(t *testing.T) {
+	var buf bytes.Buffer
+
+	cfg := &Config{Level: "debug"}
+	log := NewLogger(cfg).With("request_id", "abc-123").SetWriter(&buf)
+	log.Info("test message")
+
+	ctx := context.Background()
+	ctx = WithContext(ctx, log)
+	logger2 := FromContext(ctx)
+	logger2.Info("logger2")
+
+	output := buf.String()
+	t.Logf("Output: %s", output)
+	if !strings.Contains(output, "abc-123") {
+		t.Errorf("Field was not logged: %s", output)
 	}
 }

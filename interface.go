@@ -3,6 +3,8 @@ package logging
 import (
 	"io"
 	"net/http"
+
+	"google.golang.org/grpc"
 )
 
 type Logger interface {
@@ -21,4 +23,5 @@ type Logger interface {
 
 	//plugins
 	ChiRequestLogger() func(next http.Handler) http.Handler
+	LoggerMiddleware() grpc.UnaryServerInterceptor
 }

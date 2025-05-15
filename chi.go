@@ -116,8 +116,10 @@ func (s *logger) ChiRequestLogger() func(next http.Handler) http.Handler {
 			r.Body = io.NopCloser(bytes.NewBuffer(reqBody))
 
 			body := new(bytes.Buffer)
-			if err := json.Compact(body, reqBody); err != nil {
-				s.Error("json.Compact", "error", err)
+			if len(reqBody) != 0 {
+				if err := json.Compact(body, reqBody); err != nil {
+					s.Error("json.Compact", "error", err)
+				}
 			}
 
 			t1 := time.Now()
