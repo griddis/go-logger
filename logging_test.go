@@ -2,11 +2,15 @@ package logging
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"reflect"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/bxcodec/faker/v3"
 )
@@ -210,3 +214,119 @@ func BenchmarkLoggerInfo(b *testing.B) {
 		})
 	}
 }*/
+
+func Test_convert(t *testing.T) {
+	type args struct {
+		val interface{}
+	}
+	timeNow := int64(1617000000)
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			"int",
+			args{
+				val: 21,
+			},
+			"21",
+		},
+		{
+			"int32",
+			args{
+				val: int32(21),
+			},
+			"21",
+		},
+		{
+			"int64",
+			args{
+				val: int64(21),
+			},
+			"21",
+		},
+		{
+			"float32",
+			args{
+				val: float32(21.2),
+			},
+			"21.2",
+		},
+		{
+			"float64",
+			args{
+				val: float64(21.2),
+			},
+			"21.2",
+		},
+		{
+			"string",
+			args{
+				val: "test",
+			},
+			"test",
+		},
+		{
+			"[]string",
+			args{
+				val: []string{"test", "test2"},
+			},
+			"test, test2",
+		},
+		{
+			"time",
+			args{
+				val: time.Unix(timeNow, 0),
+			},
+			time.Unix(timeNow, 0).String(),
+		},
+		{
+			"error",
+			args{
+				val: errors.New("test error"),
+			},
+			"test error",
+		},
+		{
+			"struct",
+			args{
+				val: SomeStruct{
+					RandomList: []string{"test1", "test2"},
+				},
+			},
+			"{[test1 test2]}",
+		},
+		{
+			"misk",
+			args{},
+			"undefined",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := _convert(tt.args.val); got != tt.want {
+				t.Errorf("_convert() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestWithAddsFields(t *testing.T) {
+	var buf bytes.Buffer
+
+	cfg := &Config{Level: "debug"}
+	log := NewLogger(cfg).With("request_id", "abc-123").SetWriter(&buf)
+	log.Info("test message")
+
+	ctx := context.Background()
+	ctx = WithContext(ctx, log)
+	logger2 := FromContext(ctx)
+	logger2.Info("logger2")
+
+	output := buf.String()
+	t.Logf("Output: %s", output)
+	if !strings.Contains(output, "abc-123") {
+		t.Errorf("Field was not logged: %s", output)
+	}
+}
