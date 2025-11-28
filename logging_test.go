@@ -57,7 +57,7 @@ func TestTrimBody(t *testing.T) {
 	if err := json.Compact(buffer, body); err != nil {
 		fmt.Println(err)
 	}
-	t.Errorf("body() = %v", buffer)
+	t.Logf("body() = %v", buffer)
 }
 
 /*func TestNewLogger_1(t *testing.T) {

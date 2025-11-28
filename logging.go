@@ -132,43 +132,82 @@ func (s *logger) Info(info string, keyvals ...interface{}) {
 	s.next.Info(info, s._parse(keyvals...)...)
 }
 
-func (s *logger) _parse(keyvals ...interface{}) []rz.Field {
-
-	if len(keyvals)%2 != 0 {
-		keyvals = append(keyvals, missingKey)
+func (s *logger) _parse(keyvals ...any) []rz.Field {
+	n := len(keyvals)
+	if n == 0 {
+		return nil
 	}
-	var l []rz.Field = make([]rz.Field, len(keyvals)%2)
-	for i := 0; i < len(keyvals); i += 2 {
-		switch keyvals[i].(type) {
-		// case string, int, int64:
-		// 	l = append(l, rz.String(_convert(keyvals[i]), _convert(keyvals[i+1])))
+	// Pre-allocate slice with correct capacity
+	l := make([]rz.Field, 0, (n/2)+1)
+
+	for i := 0; i < n; i += 2 {
+		var val any = missingKey
+		if i+1 < n {
+			val = keyvals[i+1]
+		}
+
+		switch k := keyvals[i].(type) {
 		case error:
-			l = append(l, rz.Error("error", keyvals[i].(error)))
-			//i -= 1
-		//case map[string][]string:
+			l = append(l, rz.Error("error", k))
 		case []string:
-			l = append(l, s._parseSliceString(keyvals[i].([]string))...)
+			l = append(l, s._parseSliceString(k)...)
 		default:
-			l = append(l, rz.String(_convert(keyvals[i]), _convert(keyvals[i+1])))
+			key := _convert(k)
+			switch v := val.(type) {
+			case string:
+				l = append(l, rz.String(key, v))
+			case int:
+				l = append(l, rz.Int(key, v))
+			case int8:
+				l = append(l, rz.Int8(key, v))
+			case int16:
+				l = append(l, rz.Int16(key, v))
+			case int32:
+				l = append(l, rz.Int32(key, v))
+			case int64:
+				l = append(l, rz.Int64(key, v))
+			case uint:
+				l = append(l, rz.Uint(key, v))
+			case uint8:
+				l = append(l, rz.Uint8(key, v))
+			case uint16:
+				l = append(l, rz.Uint16(key, v))
+			case uint32:
+				l = append(l, rz.Uint32(key, v))
+			case uint64:
+				l = append(l, rz.Uint64(key, v))
+			case float32:
+				l = append(l, rz.Float32(key, v))
+			case float64:
+				l = append(l, rz.Float64(key, v))
+			case bool:
+				l = append(l, rz.Bool(key, v))
+			case error:
+				l = append(l, rz.Error(key, v))
+			case []string:
+				l = append(l, rz.Strings(key, v))
+			case time.Duration:
+				l = append(l, rz.Duration(key, v))
+			case time.Time:
+				l = append(l, rz.Time(key, v))
+			default:
+				l = append(l, rz.String(key, _convert(v)))
+			}
 		}
 	}
 
 	return l
 }
 
-/*func (s *logger) _parseMapSliceString(keyvals map[string][]string) (l []rz.Field) {
-	for i, k := range keyvals {
-		l = append(l, rz.String(keyvals[i], keyvals[i+1]))
-	}
-	return l
-}*/
-
 func (s *logger) _parseSliceString(keyvals []string) (l []rz.Field) {
-	if len(keyvals)%2 != 0 {
-		keyvals = append(keyvals, missingKey)
-	}
-	for i := 0; i < len(keyvals); i += 2 {
-		l = append(l, rz.String(keyvals[i], keyvals[i+1]))
+	n := len(keyvals)
+	l = make([]rz.Field, 0, (n/2)+1)
+	for i := 0; i < n; i += 2 {
+		val := missingKey
+		if i+1 < n {
+			val = keyvals[i+1]
+		}
+		l = append(l, rz.String(keyvals[i], val))
 	}
 	return l
 }
