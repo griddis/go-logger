@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
 	"runtime"
 	"strconv"
 	"strings"
@@ -40,7 +39,7 @@ type Config struct {
 	}
 	DefaultFieldName string
 	Format           string
-	Writer           *os.File
+	Writer           io.Writer
 }
 
 type logger struct {
@@ -48,52 +47,36 @@ type logger struct {
 }
 
 func NewLogger(cfg *Config) Logger {
-	/*lvl, err := getLevel(cfg.Level)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "logger init: %s", err)
-		os.Exit(1)
-	}
-	format := "plain"
-	var klog kitlog.Logger
-
-	if format == "json" {
-		klog = kitlog.NewJSONLogger(kitlog.NewSyncWriter(cfg.Writer))
-	} else {
-		klog = kitlog.NewLogfmtLogger(kitlog.NewSyncWriter(cfg.Writer))
-	}
-	klog = kitloglevel.NewFilter(klog, lvl)
-	if cfg.Time.Enabled {
-		klog = kitlog.With(klog, "ts", kitlog.DefaultTimestampUTC)
-	}
-
-	onceInit.Do(func() {
-		Log = &Logger{klog}
-	})*/
-
 	// new logger
 
 	//hostname, _ := os.Hostname()
 	logLevel, _ := rz.ParseLevel(cfg.Level)
-	/*if err != nil {
-
-	}*/
 
 	// update global logger's context fields
 	log := rz.New()
-	log = log.With(
-		/*rz.Fields(
-			rz.String("hostname", hostname),
-		),*/
-		rz.Level(logLevel),
-		//rz.Formatter(rz.FormatterCLI()),
-	)
-	//log.Info("info from logger", rz.String("hello", "world"))
 
+	options := []rz.LoggerOption{
+		rz.Level(logLevel),
+	}
+
+	if cfg.Format == "json" {
+		// json is default
+	} else {
+		options = append(options, rz.Formatter(rz.FormatterCLI()))
+	}
+
+	if cfg.Writer != nil {
+		options = append(options, rz.Writer(cfg.Writer))
+	}
+
+	log = log.With(options...)
+
+	l := &logger{log}
 	onceInit.Do(func() {
-		Log = &logger{log}
+		Log = l
 	})
 
-	return Log
+	return l
 }
 
 func WithContext(ctx context.Context, logger Logger) context.Context {
