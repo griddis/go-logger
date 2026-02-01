@@ -13,7 +13,7 @@ import (
 	"time"
 
 	kitloglevel "github.com/go-kit/log/level"
-	rz "gitlab.com/bloom42/libs/rz-go"
+	rz "github.com/griddis/go-logger/libs/rz-go"
 )
 
 type loggerKey struct{}

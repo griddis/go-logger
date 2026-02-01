@@ -1,15 +1,17 @@
 module github.com/griddis/go-logger
 
-go 1.24.0
+go 1.25.0
 
-toolchain go1.24.6
+toolchain go1.25.6
 
 require (
 	github.com/bxcodec/faker/v3 v3.8.1
+	github.com/go-chi/chi v1.5.5
 	github.com/go-kit/log v0.2.0
+	github.com/google/uuid v1.6.0
 	github.com/opentracing/opentracing-go v1.2.0
+	github.com/pkg/errors v0.9.1
 	github.com/uber/jaeger-client-go v2.30.0+incompatible
-	gitlab.com/bloom42/libs/rz-go v1.3.1
 	go.opentelemetry.io/otel/trace v1.38.0
 	google.golang.org/grpc v1.77.0
 )

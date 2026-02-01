@@ -5,9 +5,9 @@ import (
 	"strings"
 	"time"
 
+	rz "github.com/griddis/go-logger/libs/rz-go"
 	"github.com/opentracing/opentracing-go"
 	"github.com/uber/jaeger-client-go"
-	rz "gitlab.com/bloom42/libs/rz-go"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
