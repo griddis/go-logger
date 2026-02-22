@@ -2,6 +2,7 @@ package logging
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -12,6 +13,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 )
 
 // HeadersToLog list headers to log in request info.
@@ -28,6 +31,22 @@ func (s *logger) LoggerMiddleware() grpc.UnaryServerInterceptor {
 		handler grpc.UnaryHandler,
 	) (interface{}, error) {
 		start := time.Now()
+
+		if s.next.GetLevel() == rz.DebugLevel {
+			if p, ok := req.(proto.Message); ok {
+				mo := protojson.MarshalOptions{
+					EmitUnpopulated: true,
+					UseProtoNames:   true,
+				}
+				if b, err := mo.Marshal(p); err == nil {
+					s.Debug("incoming gRPC request payload", "method", info.FullMethod, "payload", string(b))
+				} else {
+					s.Debug("incoming gRPC request payload", "method", info.FullMethod, "payload_type", fmt.Sprintf("%T", req))
+				}
+			} else {
+				s.Debug("incoming gRPC request payload", "method", info.FullMethod, "payload_type", fmt.Sprintf("%T", req))
+			}
+		}
 
 		// Вызываем основной обработчик
 		resp, err := handler(ctx, req)
