@@ -124,3 +124,51 @@ func openTracingFields(span opentracing.Span) []string {
 	}
 	return nil
 }
+
+func (s *logger) LoggerClientMiddleware() grpc.UnaryClientInterceptor {
+	return func(
+		ctx context.Context,
+		method string,
+		req, reply interface{},
+		cc *grpc.ClientConn,
+		invoker grpc.UnaryInvoker,
+		opts ...grpc.CallOption,
+	) error {
+		start := time.Now()
+
+		if s.next.GetLevel() == rz.DebugLevel {
+			if p, ok := req.(proto.Message); ok {
+				mo := protojson.MarshalOptions{
+					EmitUnpopulated: true,
+					UseProtoNames:   true,
+				}
+				if b, err := mo.Marshal(p); err == nil {
+					s.Debug("outgoing gRPC request payload", "method", method, "payload", string(b))
+				} else {
+					s.Debug("outgoing gRPC request payload", "method", method, "payload_type", fmt.Sprintf("%T", req))
+				}
+			} else {
+				s.Debug("outgoing gRPC request payload", "method", method, "payload_type", fmt.Sprintf("%T", req))
+			}
+		}
+
+		err := invoker(ctx, method, req, reply, cc, opts...)
+
+		if err != nil {
+			s.Error("Processed outgoing gRPC request",
+				"method", method,
+				"duration", time.Since(start),
+				"code", status.Code(err),
+				"error", err,
+				s.headersFields(ctx))
+		} else {
+			s.Info("Processed outgoing gRPC request",
+				"method", method,
+				"duration", time.Since(start),
+				"code", status.Code(err),
+				s.headersFields(ctx))
+		}
+
+		return err
+	}
+}

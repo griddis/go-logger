@@ -24,4 +24,5 @@ type Logger interface {
 	//plugins
 	ChiRequestLogger() func(next http.Handler) http.Handler
 	LoggerMiddleware() grpc.UnaryServerInterceptor
+	LoggerClientMiddleware() grpc.UnaryClientInterceptor
 }
